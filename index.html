@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CyberDefense: System Breach</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -16,6 +15,7 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow: hidden;
             user-select: none;
+            touch-action: none;
         }
         canvas {
             image-rendering: pixelated;
@@ -44,6 +44,14 @@
             background: radial-gradient(circle, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
             pointer-events: none;
             z-index: 45;
+        }
+        /* Hide scrollbars for the store while allowing scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 <script type="importmap">

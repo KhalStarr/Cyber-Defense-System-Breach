@@ -32,7 +32,8 @@ export enum EnemyType {
   ROOTKIT = 'ROOTKIT',
   LOGIC_BOMB = 'LOGIC_BOMB',
   BOTNET_NODE = 'BOTNET_NODE',
-  ZERO_DAY = 'ZERO_DAY'
+  ZERO_DAY = 'ZERO_DAY',
+  HOSTILE_FRAGMENT = 'HOSTILE_FRAGMENT'
 }
 
 export enum EventType {
@@ -45,7 +46,11 @@ export enum EventType {
   CACHE_OVERFLOW = 'CACHE_OVERFLOW',
   NETWORK_CONGESTION = 'NETWORK_CONGESTION',
   MALWARE_MUTATION = 'MALWARE_MUTATION',
-  FEEDBACK_LOOP = 'FEEDBACK_LOOP'
+  FEEDBACK_LOOP = 'FEEDBACK_LOOP',
+  CONTAINMENT_FAILURE = 'CONTAINMENT_FAILURE',
+  DATA_BLEED = 'DATA_BLEED',
+  QUARANTINE_LOCKDOWN = 'QUARANTINE_LOCKDOWN',
+  RECURSIVE_MUTATION = 'RECURSIVE_MUTATION'
 }
 
 export interface HexCoord {
@@ -83,9 +88,7 @@ export interface Enemy {
   bounty: number;
   isBoss?: boolean;
   isFragment?: boolean;
-  killedByProxy?: boolean;
-  slowImmune?: boolean;
-  aoeResist?: boolean;
+  isMutated?: boolean;
 }
 
 export interface TowerInstance {
@@ -98,8 +101,8 @@ export interface TowerInstance {
   rotation: number;
   level: number;
   disruptedUntil: number;
-  isInterfered?: boolean;
-  isPatched?: boolean;
+  corruption: number;
+  isQuarantined?: boolean;
 }
 
 export interface Projectile {
@@ -113,6 +116,8 @@ export interface Projectile {
   sourceType: TowerType;
   isExplosive?: boolean;
   explosionRadius?: number;
+  isCorrupted?: boolean;
+  isInverted?: boolean;
 }
 
 export interface ActiveEvent {
@@ -121,6 +126,17 @@ export interface ActiveEvent {
   duration: number;
   name: string;
   description: string;
+}
+
+export interface BlacksiteFork {
+  id: string;
+  title: string;
+  description: string;
+  options: {
+    label: string;
+    effect: string;
+    id: string;
+  }[];
 }
 
 export interface GameState {
@@ -134,4 +150,9 @@ export interface GameState {
   isGodMode: boolean;
   activeEvent?: ActiveEvent | null;
   difficulty: Difficulty;
+  isBlacksiteEnabled: boolean;
+  globalContamination: number;
+  contaminationMap: Record<string, number>;
+  threatExposed: boolean;
+  threatInteg: number;
 }

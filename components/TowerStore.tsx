@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { TOWERS, MAX_TOWER_LEVEL } from '../constants';
-import { TowerType, TowerInstance } from '../types';
+import { TOWERS, MAX_TOWER_LEVEL, THEME } from '../constants';
+import { TowerType, TowerInstance, Difficulty } from '../types';
 
 interface TowerStoreProps {
   credits: number;
@@ -10,6 +10,7 @@ interface TowerStoreProps {
   selectedTowerInstance: TowerInstance | null;
   onUpgradeTower: (id: string) => void;
   onSalvageTower: (id: string) => void;
+  difficulty?: Difficulty | null;
 }
 
 const TowerStore: React.FC<TowerStoreProps> = ({ 
@@ -18,68 +19,78 @@ const TowerStore: React.FC<TowerStoreProps> = ({
   selectedTowerType, 
   selectedTowerInstance,
   onUpgradeTower,
-  onSalvageTower
+  onSalvageTower,
+  difficulty = Difficulty.NORMAL
 }) => {
   const isUpgrading = !!selectedTowerInstance;
-  const isCurrentlyDisrupted = selectedTowerInstance && selectedTowerInstance.disruptedUntil > performance.now();
+  const costMult = 1.0; // In a real scenario, this would come from DIFFICULTY_CONFIG[difficulty].costMult
 
   return (
-    <div className="flex flex-col bg-black/80 border-r border-green-500/30 backdrop-blur-md h-full w-64 relative">
-      <div className="p-4 border-b border-green-500/30">
-        <h2 className="text-xl font-bold text-green-400">
-          {isUpgrading ? 'Kernel Inspector' : 'Defense Arsenal'}
+    <div className={`flex flex-col bg-black/80 border-t md:border-t-0 md:border-r backdrop-blur-md h-auto md:h-full w-full md:w-64 relative z-40 transition-all duration-300 ${selectedTowerInstance?.corruption ? 'border-[#bc13fe]/50 shadow-[0_0_15px_rgba(188,19,254,0.1)]' : 'border-green-500/30'}`}>
+      <div className={`p-3 md:p-4 border-b flex justify-between items-center shrink-0 ${selectedTowerInstance?.corruption ? 'border-[#bc13fe]/30 bg-[#bc13fe]/5' : 'border-green-500/30 bg-green-500/5'}`}>
+        <h2 className={`text-xs md:text-sm font-black uppercase tracking-widest ${selectedTowerInstance?.corruption ? 'text-[#bc13fe]' : 'text-green-400'}`}>
+          {isUpgrading ? 'Kernel Inspector' : 'System Arsenal'}
         </h2>
+        {!isUpgrading && (
+          <div className="md:hidden text-[10px] font-bold text-green-400 tabular-nums">
+            ${credits.toLocaleString()}
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-x-auto md:overflow-y-auto no-scrollbar p-3 md:p-4 scroll-smooth">
         {isUpgrading ? (
-          <div className="space-y-6">
-            {isCurrentlyDisrupted && (
-              <div className="p-2 border border-red-500 bg-red-500/10 text-red-500 text-[10px] font-black uppercase text-center animate-pulse">
-                KERNEL_DISRUPTED: AWAITING RECOVERY
+          <div className="flex md:flex-col gap-4 md:gap-5 min-w-max md:min-w-0 pb-2 md:pb-0">
+            {/* Tower Identification */}
+            <div className={`p-3 md:p-4 border min-w-[200px] md:min-w-0 ${selectedTowerInstance.corruption > 15 ? 'border-[#bc13fe]/40 bg-[#bc13fe]/5' : 'border-green-500/30 bg-green-500/5'}`}>
+              <div className="text-[9px] text-white/40 uppercase mb-1 font-bold">Revision Level</div>
+              <div className="flex gap-1 mb-3">
+                {[...Array(MAX_TOWER_LEVEL)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-4 h-1.5 ${i < selectedTowerInstance.level 
+                      ? (selectedTowerInstance.corruption > 30 ? 'bg-[#bc13fe]' : 'bg-green-400') 
+                      : 'bg-white/10'}`} 
+                  />
+                ))}
               </div>
-            )}
-            
-            <div className="p-4 border border-green-500/40 bg-green-500/5">
-              <div className="text-xs text-green-600 uppercase mb-1">Active Core</div>
-              <div className="text-lg font-black text-white uppercase italic tracking-wider">
+              <div className="text-sm md:text-lg font-black text-white uppercase italic tracking-tighter">
                 {TOWERS[selectedTowerInstance.type].name}
               </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-[10px] text-green-800 font-bold uppercase">Revision:</span>
-                <div className="flex gap-1">
-                  {[...Array(MAX_TOWER_LEVEL)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`w-3 h-1 ${i < selectedTowerInstance.level ? 'bg-green-400' : 'bg-green-900/40'}`} 
-                    />
-                  ))}
+              
+              {/* Corruption Metrics (DLC Only) */}
+              {selectedTowerInstance.corruption > 0 && (
+                <div className="mt-4 pt-3 border-t border-[#bc13fe]/20">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-[8px] text-[#bc13fe] font-black uppercase tracking-widest">Behavioral Drift</div>
+                    <div className="text-[8px] text-[#bc13fe] font-bold">{Math.floor(selectedTowerInstance.corruption)}%</div>
+                  </div>
+                  <div className="w-full h-1 bg-[#bc13fe]/10 overflow-hidden border border-[#bc13fe]/30">
+                    <div className="h-full bg-[#bc13fe] shadow-[0_0_5px_#bc13fe]" style={{ width: `${selectedTowerInstance.corruption}%` }} />
+                  </div>
+                  <p className="text-[7px] text-[#bc13fe]/60 mt-1 uppercase italic leading-none">
+                    {selectedTowerInstance.corruption > 40 ? "CRITICAL INSTABILITY: CHANCE TO HEAL TARGET" : "MINOR DATA DESYNC DETECTED"}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <div className="text-[10px] text-green-800 uppercase tracking-widest font-bold">Current Metrics</div>
-              <div className="text-[11px] space-y-2">
+            {/* Scaled Metrics */}
+            <div className="space-y-2 min-w-[140px] md:min-w-0">
+              <div className="text-[9px] text-white/40 uppercase font-bold tracking-widest">Active Metrics</div>
+              <div className="space-y-1 text-[10px] md:text-xs font-mono">
                 {(() => {
                   const def = TOWERS[selectedTowerInstance.type];
-                  const scalingFactor = Math.pow(1.4, selectedTowerInstance.level - 1);
-                  const rangeFactor = 1 + (selectedTowerInstance.level - 1) * 0.15;
-                  const speedFactor = 1 + (selectedTowerInstance.level - 1) * 0.2;
-                  
+                  const scale = Math.pow(1.4, selectedTowerInstance.level - 1);
                   return (
                     <>
-                      <div className="flex justify-between p-2 bg-black/40 border border-green-500/10">
-                        <span className="text-green-700">Payload Pwr:</span>
-                        <span className="text-green-400">{(def.damage * scalingFactor).toFixed(0)}</span>
+                      <div className="flex justify-between p-1.5 bg-black/40 border border-white/5">
+                        <span className="text-white/40">PWR:</span>
+                        <span className="text-white font-bold">{(def.damage * scale).toFixed(0)}</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-black/40 border border-green-500/10">
-                        <span className="text-green-700">Audit Range:</span>
-                        <span className="text-green-400">{(def.range * rangeFactor).toFixed(0)}px</span>
-                      </div>
-                      <div className="flex justify-between p-2 bg-black/40 border border-green-500/10">
-                        <span className="text-green-700">Clock Rate:</span>
-                        <span className="text-green-400">{(def.fireRate * speedFactor).toFixed(1)}/s</span>
+                      <div className="flex justify-between p-1.5 bg-black/40 border border-white/5">
+                        <span className="text-white/40">RNG:</span>
+                        <span className="text-white font-bold">{(def.range * (1 + (selectedTowerInstance.level-1)*0.15)).toFixed(0)}</span>
                       </div>
                     </>
                   );
@@ -87,76 +98,58 @@ const TowerStore: React.FC<TowerStoreProps> = ({
               </div>
             </div>
 
-            <div className="space-y-3 pt-2">
+            {/* Interaction Layer */}
+            <div className="flex flex-row md:flex-col gap-2 pt-1 md:pt-2">
               {selectedTowerInstance.level < MAX_TOWER_LEVEL ? (
                 (() => {
-                  const upgradeCost = TOWERS[selectedTowerInstance.type].cost * (selectedTowerInstance.level + 1);
+                  const baseCost = TOWERS[selectedTowerInstance.type].cost;
+                  const upgradeCost = Math.floor(baseCost * (selectedTowerInstance.level + 1));
                   const canAfford = credits >= upgradeCost;
                   
                   return (
                     <button
                       onClick={() => onUpgradeTower(selectedTowerInstance.id)}
                       disabled={!canAfford}
-                      className={`w-full py-4 border-2 font-black uppercase italic text-sm tracking-widest transition-all ${
+                      className={`flex-1 px-4 py-3 border-2 font-black uppercase italic text-[10px] md:text-xs tracking-widest transition-all ${
                         canAfford 
-                          ? 'border-green-400 text-green-400 hover:bg-green-400 hover:text-black shadow-[0_0_20px_rgba(57,255,20,0.2)]' 
-                          : 'border-red-900/50 text-red-900 cursor-not-allowed opacity-50'
+                          ? 'border-green-400 text-green-400 hover:bg-green-400 hover:text-black shadow-[0_0_15px_rgba(57,255,20,0.2)]' 
+                          : 'border-red-900/40 text-red-900/60 cursor-not-allowed'
                       }`}
                     >
-                      Upgrade kernel
-                      <div className="text-[10px] mt-1 opacity-80">${upgradeCost} CR</div>
+                      <div className="flex justify-between items-center w-full">
+                        <span>Upgrade</span>
+                        <span className="opacity-80">${upgradeCost}</span>
+                      </div>
                     </button>
                   );
                 })()
               ) : (
-                <div className="w-full py-4 border-2 border-white/20 text-white/40 text-center font-black uppercase italic text-sm tracking-widest">
-                  Max Revision
+                <div className="flex-1 px-4 py-3 border-2 border-white/10 text-white/20 text-center font-black uppercase italic text-[10px] md:text-xs tracking-widest">
+                  MAX_REVISION
                 </div>
               )}
 
               <button
                 onClick={() => onSalvageTower(selectedTowerInstance.id)}
-                className="w-full py-2 border border-red-500/30 text-red-500/60 font-bold uppercase italic text-[10px] tracking-widest hover:bg-red-500 hover:text-black transition-all group"
+                className={`px-4 py-2 border font-bold uppercase italic text-[8px] md:text-[10px] tracking-widest transition-all ${
+                  selectedTowerInstance.corruption > 15 
+                    ? 'border-[#bc13fe] text-[#bc13fe] hover:bg-[#bc13fe] hover:text-black' 
+                    : 'border-red-500/30 text-red-500/60 hover:bg-red-500 hover:text-black'
+                }`}
               >
-                Salvage Kernel
-                <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  +{(() => {
-                    const base = TOWERS[selectedTowerInstance.type].cost;
-                    let invested = base;
-                    if (selectedTowerInstance.level >= 2) invested += base * 2;
-                    if (selectedTowerInstance.level >= 3) invested += base * 3;
-                    return Math.floor(invested * 0.75);
-                  })()} CR
-                </span>
+                {selectedTowerInstance.corruption > 15 ? 'Purge Data (70%)' : 'Salvage (75%)'}
+              </button>
+              
+              <button 
+                onClick={() => onSelectTower(null)}
+                className="md:hidden px-4 py-2 border border-white/20 text-white/40 text-[10px] font-bold uppercase"
+              >
+                Close
               </button>
             </div>
-
-            <button 
-              onClick={() => onSelectTower(null)}
-              className="w-full py-2 text-[10px] text-green-900 uppercase font-bold hover:text-green-400 transition-colors"
-            >
-              Back to Arsenal
-            </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Selected Tower Pre-Deployment Info */}
-            {selectedTowerType && (
-              <div className="p-3 border-2 border-green-400 bg-green-500/10 animate-pulse-slow shadow-[0_0_15px_rgba(57,255,20,0.1)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
-                  <span className="text-[10px] font-black uppercase text-green-400 tracking-widest italic">Deployment Manifest</span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-white font-medium italic mb-2">
-                  "{TOWERS[selectedTowerType].description}"
-                </p>
-                <div className="text-[9px] text-green-600 font-mono flex justify-between uppercase">
-                  <span>Status:</span>
-                  <span>Awaiting placement...</span>
-                </div>
-              </div>
-            )}
-
+          <div className="flex md:flex-col gap-3 md:gap-4 min-w-max md:min-w-0">
             {(Object.keys(TOWERS) as TowerType[]).map((key) => {
               const t = TOWERS[key];
               const isAffordable = credits >= t.cost;
@@ -167,34 +160,29 @@ const TowerStore: React.FC<TowerStoreProps> = ({
                   key={key}
                   onClick={() => onSelectTower(isSelected ? null : key)}
                   disabled={!isAffordable && !isSelected}
-                  className={`w-full p-3 border text-left transition-all duration-200 group relative overflow-hidden ${
+                  className={`flex flex-col justify-center min-w-[140px] md:min-w-0 md:w-full p-2 md:p-3 border text-left transition-all duration-200 group relative overflow-hidden ${
                     isSelected 
-                      ? 'bg-green-500/30 border-green-400 scale-[1.02] shadow-[0_0_20px_rgba(57,255,20,0.2)]' 
+                      ? 'bg-green-500/20 border-green-400 scale-[1.02] shadow-[0_0_20px_rgba(57,255,20,0.1)]' 
                       : isAffordable 
-                        ? 'border-green-500/30 hover:bg-green-500/10 hover:border-green-400' 
-                        : 'border-red-900/50 opacity-50 cursor-not-allowed'
+                        ? 'border-green-500/20 hover:bg-green-500/5 hover:border-green-500/40' 
+                        : 'border-red-900/30 opacity-40 cursor-not-allowed'
                   }`}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-bold text-sm tracking-wider uppercase">{t.name}</span>
-                    <span className={`text-xs font-bold ${isAffordable ? 'text-green-400' : 'text-red-500'}`}>
+                    <span className="font-black text-[10px] md:text-xs tracking-tighter uppercase truncate">{t.name}</span>
+                    <span className={`text-[9px] md:text-xs font-black ${isAffordable ? 'text-green-400' : 'text-red-500'}`}>
                       ${t.cost}
                     </span>
                   </div>
-                  <div className="text-[10px] text-green-600 font-mono space-y-1">
-                    <div className="flex justify-between">
-                      <span>PWR:</span> <span>{t.damage}{t.isExplosive ? ' (AOE)' : ''}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>CLOCK:</span> <span>{t.fireRate}/s</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>SCAN:</span> <span>{t.range}px</span>
-                    </div>
+                  
+                  <div className="flex justify-between text-[8px] md:text-[9px] font-mono opacity-60">
+                    <span>PWR: {t.damage}</span>
+                    <span>RNG: {t.range}</span>
                   </div>
+
                   {isSelected && (
                     <div className="absolute top-0 right-0 p-1">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping" />
                     </div>
                   )}
                 </button>
@@ -204,22 +192,12 @@ const TowerStore: React.FC<TowerStoreProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-green-500/30 shrink-0 bg-black/40">
-        <div className="text-xs text-green-800 uppercase tracking-widest mb-1 font-bold">System Credits</div>
-        <div className="text-2xl font-bold text-green-400 tabular-nums">
+      <div className={`hidden md:block p-4 border-t shrink-0 bg-black/40 ${selectedTowerInstance?.corruption ? 'border-[#bc13fe]/30' : 'border-green-500/30'}`}>
+        <div className="text-[9px] text-white/30 uppercase tracking-[0.2em] mb-1 font-black">Available_Credits</div>
+        <div className={`text-2xl font-black tabular-nums tracking-tighter ${selectedTowerInstance?.corruption ? 'text-[#bc13fe]' : 'text-green-400'}`}>
           ${credits.toLocaleString()}
         </div>
       </div>
-      
-      <style>{`
-        @keyframes pulse-slow {
-          0%, 100% { border-color: rgba(57, 255, 20, 0.4); }
-          50% { border-color: rgba(57, 255, 20, 0.8); }
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
     </div>
   );
 };

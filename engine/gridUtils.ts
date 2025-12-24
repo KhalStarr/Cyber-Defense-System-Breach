@@ -38,7 +38,8 @@ export function getNeighbors(q: number, r: number): HexCoord[] {
     { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
     { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }
   ];
-  return dirs.map(d => ({ q: q + d.q, r: r + d.q }));
+  // Fixed: r was using d.q instead of d.r
+  return dirs.map(d => ({ q: q + d.q, r: r + d.r }));
 }
 
 export function coordToString(c: HexCoord): string {
